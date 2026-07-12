@@ -57,7 +57,7 @@ export default function HeroBanner() {
   };
 
   return (
-    <section className="w-full py-4 sm:py-6 transition-all duration-300">
+    <section className="w-full bg-[#F9F9F9] py-4 sm:py-6 transition-all duration-300">
       
       {/* 1920x1080 ডিসপ্লের জন্য ন্যাভবারের সাথে মিলিয়ে ঠিক ১৫০ পিক্সেল গ্যাপ (lg:px-[150px]) */}
       <div className="w-full px-4 sm:px-8 lg:px-[150px] mx-auto">
