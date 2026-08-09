@@ -1,8 +1,16 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // ✅ অ্যাডমিন প্যানেলে গেলে Footer হাইড করার লজিক
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <footer className="bg-[#0A1E11] text-[#E8DFC8] pt-16 pb-6 border-t-[4px] border-[#1E5E3A]">
       {/* 1920x1080 ডিসপ্লের জন্য ন্যাভবার ও অন্যান্য সেকশনের সাথে হুবহু অ্যালাইমেন্ট (lg:px-[150px]) */}
@@ -19,18 +27,18 @@ export default function Footer() {
               <div className="relative w-10 h-10 flex items-center justify-center p-1 rounded-full">
                 <Image
                   src="/favicons/android-chrome-512x512.png" 
-                  alt="Pilot Natural Tea Logo"
+                  alt="Pilot Natural Logo"
                   width={40}
                   height={40}
                   className="object-contain"
                 />
               </div>
               <span className="font-sans text-2xl font-bold tracking-tight text-white">
-                Pilot <span className="font-light text-[#C6FF36]">Tea</span>
+                Pilot <span className="font-light text-[#C6FF36]">Natural</span>
               </span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed max-w-xs pt-2">
-              ১০০% খাঁটি ও প্রাকৃতিক চা এবং মধু সরাসরি বাগান ও খামার থেকে আপনার দোরগোড়ায়। সুস্থতা আর স্বাদের এক অনন্য প্রতিশ্রুতি।
+              ১০০% খাঁটি ও প্রাকৃতিক পণ্য সরাসরি বাগান ও খামার থেকে আপনার দোরগোড়ায়। সুস্থতা আর স্বাদের এক অনন্য প্রতিশ্রুতি।
             </p>
             {/* Social Icons */}
             <div className="flex items-center gap-4 pt-2">
@@ -62,8 +70,8 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-4">Categories</h3>
             <ul className="space-y-2.5 text-sm text-gray-400">
-              <li><Link href="#green-tea" className="hover:text-[#C6FF36] transition-colors">Premium Green Tea</Link></li>
-              <li><Link href="#black-tea" className="hover:text-[#C6FF36] transition-colors">Sylhet Black Tea</Link></li>
+              <li><Link href="#green" className="hover:text-[#C6FF36] transition-colors">Premium Green</Link></li>
+              <li><Link href="#black" className="hover:text-[#C6FF36] transition-colors">Sylhet Black</Link></li>
               <li><Link href="#honey" className="hover:text-[#C6FF36] transition-colors">Natural Honey</Link></li>
               <li><Link href="#combos" className="hover:text-[#C6FF36] transition-colors">Exclusive Combos</Link></li>
               <li><Link href="#gifts" className="hover:text-[#C6FF36] transition-colors">Gift Boxes</Link></li>
@@ -84,7 +92,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <svg className="w-5 h-5 text-[#C6FF36] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                <span>support@pilotnaturaltea.com</span>
+                <span>support@pilotnatural.com</span>
               </li>
             </ul>
           </div>
@@ -98,7 +106,7 @@ export default function Footer() {
           
           {/* Left: Copyright & Developer Info */}
           <div className="flex flex-col gap-1.5 text-gray-400 text-xs sm:text-sm text-center xl:text-left">
-            <p>Copyright &copy; {new Date().getFullYear()} Pilot Natural Tea. All Rights Reserved.</p>
+            <p>Copyright &copy; {new Date().getFullYear()} Pilot Natural. All Rights Reserved.</p>
             <p>
               Design and Develop by{" "}
               <a 
