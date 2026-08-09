@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
 import Footer from "@/components/Footer";
+import AuthProvider from "@/components/AuthProvider"; // Added AuthProvider
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pilot Natural Tea",
+  title: "Pilot Natural", // Removed "Tea"
   description:
-    "Handpicked green and black tea, naturally grown and freshly delivered to your door.",
+    "Handpicked natural green and black blends, naturally grown and freshly delivered to your door.", // Removed "tea"
   icons: {
     icon: [
       { url: "/favicons/favicon.ico" },
@@ -44,9 +45,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#F7F2E7]">
-        <Navbar />
-        {children}
-        <Footer />
+        <AuthProvider>
+          <Navbar />
+          {children}
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
