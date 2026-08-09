@@ -4,28 +4,44 @@ import React, { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-// Exact categories from your reference image
-const categories = [
-  { id: 1, title: "Honey", link: "#honey", iconPath: "/icons/honey.png" },
-  { id: 2, title: "Dates", link: "#dates", iconPath: "/icons/dates.png" },
-  { id: 3, title: "Spices", link: "#spices", iconPath: "/icons/spices.png" },
-  { id: 4, title: "Nuts & Seeds", link: "#nuts", iconPath: "/icons/nutsandseeds.png" },
-  { id: 5, title: "Beverage", link: "#beverage", iconPath: "/icons/beverage.png" },
-  { id: 6, title: "Rice", link: "#rice", iconPath: "/icons/rice.png" },
-  { id: 7, title: "Flours & Lentils", link: "#flours", iconPath: "/icons/flours.png" },
-  { id: 8, title: "Functional Food", link: "#functional", iconPath: "/icons/functional.png" },
-  { id: 9, title: "Rice", link: "#rice", iconPath: "/icons/rice.png" },
-  { id: 10, title: "Flours & Lentils", link: "#flours", iconPath: "/icons/flours.png" },
-  { id: 11, title: "Functional Food", link: "#functional", iconPath: "/icons/functional.png" },
-];
+interface ICategory {
+  _id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  isFeatured: boolean;
+  status: "Active" | "Inactive";
+}
 
 export default function CategoryCards() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // অ্যানিমেশন কন্ট্রোল করার জন্য স্টেট
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Function to handle smooth scrolling on arrow click
+  // 📌 API থেকে ক্যাটাগরি ফেচ করা এবং ফিচার্ড ক্যাটাগরি ফিল্টার করা
+  useEffect(() => {
+    const fetchFeaturedCategories = async () => {
+      try {
+        const res = await fetch("/v1/category");
+        const data = await res.json();
+        if (data.success) {
+          const featured = data.data.filter(
+            (cat: ICategory) => cat.isFeatured === true && cat.status === "Active"
+          );
+          setCategories(featured);
+        }
+      } catch (error) {
+        console.error("Failed to fetch featured categories:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeaturedCategories();
+  }, []);
+
+  // Smooth scrolling function for arrows
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       const { current } = scrollRef;
@@ -34,27 +50,28 @@ export default function CategoryCards() {
     }
   };
 
-  // Auto-scroll Animation Effect (কার্ডগুলো নিজে নিজে বাম দিকে যাবে)
+  // Auto-scroll Animation Effect
   useEffect(() => {
-    // যদি কাস্টমার মাউস হোভার করে, তবে স্লাইডার থেমে যাবে
-    if (isHovered) return;
+    if (isHovered || categories.length === 0) return;
 
     const autoPlay = setInterval(() => {
       if (scrollRef.current) {
         const { current } = scrollRef;
         
-        // যদি স্লাইডার একদম শেষে পৌঁছে যায়, তবে আবার শুরুতে চলে আসবে
         if (current.scrollLeft + current.clientWidth >= current.scrollWidth - 10) {
           current.scrollTo({ left: 0, behavior: "smooth" });
         } else {
-          // নিজে নিজে ডানে স্ক্রল হবে (ফলে কার্ডগুলো বামে যাবে)
           current.scrollBy({ left: current.offsetWidth / 2, behavior: "smooth" });
         }
       }
-    }, 3000); // প্রতি ৩ সেকেন্ড (3000ms) পর পর স্লাইড হবে
+    }, 3000);
 
     return () => clearInterval(autoPlay);
-  }, [isHovered]);
+  }, [isHovered, categories]);
+
+  if (!isLoading && categories.length === 0) {
+    return null;
+  }
 
   return (
     <section className="w-full bg-[#F9F9F9] py-2 transition-all duration-300">
@@ -65,9 +82,9 @@ export default function CategoryCards() {
           Featured Categories
         </h2>
 
-        {/* Carousel Container (মাউস রাখলে অ্যানিমেশন থামানোর জন্য onMouseEnter ও onMouseLeave যুক্ত করা হয়েছে) */}
+        {/* Carousel Container (এখানে থেকে ভুল 'group' ক্লাসটি সরিয়ে দেওয়া হয়েছে) */}
         <div 
-          className="relative flex items-center group"
+          className="relative flex items-center"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -89,29 +106,37 @@ export default function CategoryCards() {
             className="flex gap-4 md:gap-6 overflow-x-auto scroll-smooth w-full py-2 px-1 [&::-webkit-scrollbar]:hidden"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {categories.map((item) => (
-              <Link
-                key={item.id}
-                href={item.link}
-                className="flex flex-col items-center gap-3 min-w-[110px] sm:min-w-[130px] md:min-w-[140px] group transition-all"
-              >
-                <div className="bg-white rounded-[24px] sm:rounded-[32px] w-full aspect-square flex items-center justify-center p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 border border-gray-50/50 group-hover:-translate-y-1">
-                  <div className="relative w-full h-full transform group-hover:scale-110 transition-transform duration-300">
-                    <Image
-                      src={item.iconPath}
-                      alt={item.title}
-                      fill
-                      className="object-contain"
-                      sizes="(max-w-768px) 80px, 100px"
-                    />
+            {isLoading ? (
+              <div className="w-full text-center py-6 text-gray-400 text-sm">Loading categories...</div>
+            ) : (
+              categories.map((item) => (
+                <Link
+                  key={item._id}
+                  href={`#${item.slug}`}
+                  className="flex flex-col items-center gap-3 min-w-[110px] sm:min-w-[130px] md:min-w-[140px] group transition-all"
+                >
+                  <div className="bg-white rounded-[24px] sm:rounded-[32px] w-full aspect-square flex items-center justify-center p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 border border-gray-50/50 group-hover:-translate-y-1">
+                    <div className="relative w-full h-full transform group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
+                      {item.icon ? (
+                        <Image
+                          src={item.icon}
+                          alt={item.name}
+                          fill
+                          className="object-contain p-1"
+                          sizes="(max-w-768px) 80px, 100px"
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-400">No Icon</span>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <span className="text-[13px] sm:text-sm font-normal text-gray-800 group-hover:text-[#F58634] transition-colors text-center leading-tight">
-                  {item.title}
-                </span>
-              </Link>
-            ))}
+                  <span className="text-[13px] sm:text-sm font-normal text-gray-800 group-hover:text-[#F58634] transition-colors text-center leading-tight">
+                    {item.name}
+                  </span>
+                </Link>
+              ))
+            )}
           </div>
 
           {/* Right Arrow */}
