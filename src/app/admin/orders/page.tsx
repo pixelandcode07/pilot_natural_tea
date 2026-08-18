@@ -1,22 +1,110 @@
-import React from "react";
-// ✅ এখানে ListTree এবং X ইম্পোর্ট করা হয়েছে
-import { Filter, Eye, Copy, Trash2, Edit, Check, Search, Printer, Box, ListTree, X } from "lucide-react";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Filter, Eye, Copy, Trash2, Edit, Search, Printer, Loader2 } from "lucide-react";
+
+interface IOrder {
+  _id: string;
+  orderNo: string;
+  customerName: string;
+  phone: string;
+  shippingAddress: string;
+  totalAmount: number;
+  paymentStatus: "Pending" | "Paid" | "Failed";
+  deliveryStatus: "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  createdAt: string;
+}
 
 export default function OrdersPage() {
-  const statuses = [
-    { name: "Pending", count: 5 }, { name: "Approved", count: 0 }, { name: "Hold", count: 0 },
-    { name: "Flagged", count: 0 }, { name: "Ready to Ship", count: 0 }, { name: "Courier Assigned", count: 1 },
-    { name: "Packed", count: 0 }, { name: "InTransit", count: 0 }, { name: "Delivered", count: 4 },
-    { name: "Return Request", count: 0 }, { name: "Partial Return", count: 0 }, { name: "Returned", count: 0 },
-  ];
+  const [orders, setOrders] = useState<IOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Status Counts
+  const [statusCounts, setStatusCounts] = useState({
+    Pending: 0, Processing: 0, Shipped: 0, Delivered: 0, Cancelled: 0
+  });
+
+  // 📌 ১. Fetch All Orders (With No-Cache)
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch("/v1/order", { cache: "no-store" });
+      const data = await res.json();
+      
+      if (data.success) {
+        setOrders(data.data);
+        
+        // Calculate status counts
+        const counts = { Pending: 0, Processing: 0, Shipped: 0, Delivered: 0, Cancelled: 0 };
+        data.data.forEach((order: IOrder) => {
+          if (counts[order.deliveryStatus] !== undefined) {
+            counts[order.deliveryStatus]++;
+          }
+        });
+        setStatusCounts(counts);
+      }
+    } catch (error) {
+      console.error("Failed to fetch orders", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  // 📌 ২. Update Order Status
+  const updateStatus = async (id: string, type: "delivery" | "payment", newStatus: string) => {
+    setUpdatingId(id);
+    try {
+      const payload = type === "delivery" ? { deliveryStatus: newStatus } : { paymentStatus: newStatus };
+      
+      const res = await fetch(`/v1/order/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        fetchOrders(); // Refresh data immediately after update
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      alert("Failed to update status");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // 📌 ৩. Delete Order
+  const handleDelete = async (id: string) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this order? This action cannot be undone.");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`/v1/order/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setOrders(orders.filter((order) => order._id !== id));
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      alert("Failed to delete order");
+    }
+  };
 
   return (
-    <div className="w-full">
+    <div className="w-full pb-10">
+      
       {/* Top Status Badges */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4 flex flex-wrap gap-4 items-center text-sm font-medium text-gray-700">
-        {statuses.map((s, i) => (
-          <div key={i} className="flex items-center gap-2 cursor-pointer hover:text-[#0B1B42]">
-            {s.name} <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs border border-gray-200">{s.count}</span>
+        {Object.entries(statusCounts).map(([status, count]) => (
+          <div key={status} className="flex items-center gap-2 cursor-pointer hover:text-[#0B1B42]">
+            {status} <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs border border-gray-200">{count}</span>
           </div>
         ))}
       </div>
@@ -36,17 +124,11 @@ export default function OrdersPage() {
         <div className="p-4 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4 w-full lg:w-auto">
             <h2 className="text-lg font-semibold text-gray-800">All Orders</h2>
-            <select className="border border-gray-300 rounded-md text-sm px-3 py-1.5 focus:outline-none">
-              <option>Select Status</option>
-            </select>
           </div>
           
           <div className="flex flex-wrap items-center gap-2">
-            <button className="bg-[#17A2B8] text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-[#138496]">Change Status</button>
             <button className="bg-[#007BFF] text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-[#0056B3]">Print Orders</button>
             <button className="bg-[#FFC107] text-black text-xs font-medium px-3 py-1.5 rounded hover:bg-[#E0A800]">Assign Delivery Channel</button>
-            <button className="bg-[#17A2B8] text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-[#138496]">Courier Status</button>
-            <button className="bg-[#20C997] text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-[#1AA179]">Bulk Courier Entry</button>
             <button className="bg-[#FF9800] text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-[#E68A00] flex items-center gap-1">+ Create Order</button>
           </div>
         </div>
@@ -54,86 +136,115 @@ export default function OrdersPage() {
         {/* Table Filters */}
         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <div className="text-sm text-gray-600 flex items-center gap-2">
-            Show 
-            <select className="border border-gray-300 rounded px-2 py-1"><option>20</option></select>
-            entries
+            Show <select className="border border-gray-300 rounded px-2 py-1"><option>20</option></select> entries
           </div>
           <div className="relative">
-            <input type="text" placeholder="Search orders, customers..." className="border border-gray-300 rounded-md text-sm pl-3 pr-8 py-1.5 w-64 focus:outline-none focus:border-[#0B1B42]" />
+            <input type="text" placeholder="Search orders..." className="border border-gray-300 rounded-md text-sm pl-3 pr-8 py-1.5 w-64 focus:outline-none focus:border-[#0B1B42]" />
             <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           </div>
         </div>
 
         {/* The Data Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-100 text-gray-600 font-semibold border-b border-gray-200">
               <tr>
                 <th className="p-4 w-10"><input type="checkbox" className="rounded" /></th>
                 <th className="p-4">Order No</th>
                 <th className="p-4">Date</th>
-                <th className="p-4">Customer</th>
-                <th className="p-4">Warehouse</th>
-                <th className="p-4">Total</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Delivery</th>
+                <th className="p-4">Customer Details</th>
+                <th className="p-4 text-center">Amount</th>
+                <th className="p-4 text-center">Status</th>
                 <th className="p-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {/* Row 1 */}
-              <tr className="hover:bg-gray-50">
-                <td className="p-4"><input type="checkbox" className="rounded" /></td>
-                <td className="p-4">
-                  <span className="text-[#007BFF] font-semibold block">2607211</span>
-                  <div className="flex gap-2 mt-2 text-gray-500">
-                    <Copy className="w-4 h-4 cursor-pointer hover:text-gray-800" />
-                    <Box className="w-4 h-4 cursor-pointer hover:text-gray-800" />
-                    <Printer className="w-4 h-4 cursor-pointer hover:text-gray-800" />
-                  </div>
-                </td>
-                <td className="p-4 text-xs text-gray-600 space-y-1">
-                  <p><span className="font-medium text-gray-800">Created:</span> 21st Jul, 26 3:46 PM</p>
-                  <p><span className="font-medium text-gray-800">Shipping:</span> 28th Jul, 26 6:00 AM</p>
-                </td>
-                <td className="p-4 text-xs">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-gray-800 text-sm">4wq5tr3yry5</span>
-                    <span className="bg-[#007BFF] text-white text-[10px] px-1.5 py-0.5 rounded">New</span>
-                    <Eye className="w-4 h-4 text-gray-500 cursor-pointer" />
-                  </div>
-                  <p className="text-gray-600 flex items-center gap-1">01719335216 <Copy className="w-3 h-3 cursor-pointer" /></p>
-                  <p className="text-gray-500 mt-1 max-w-xs whitespace-normal">Palong, Shariatpur Sadar., Naria, Shariatpur - 8000, Bangladesh</p>
-                </td>
-                <td className="p-4 text-gray-500">-</td>
-                <td className="p-4 text-xs space-y-0.5">
-                  <p className="font-bold text-gray-800">Total: ৳32060</p>
-                  <p className="text-emerald-500">Paid: ৳0</p>
-                  <p className="text-red-500">Due: ৳32060</p>
-                  <p className="text-sky-500">Delivery Fee: ৳80</p>
-                </td>
-                <td className="p-4 text-xs space-y-2">
-                  <div className="flex items-center gap-1">Order: <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded border border-yellow-200">Pending</span></div>
-                  <div className="flex items-center gap-1">Payment: <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200">Failed</span></div>
-                </td>
-                <td className="p-4">
-                  <span className="bg-[#17A2B8] text-white text-[11px] px-2 py-1 rounded font-medium">Home Delivery</span>
-                </td>
-                <td className="p-4">
-                  <div className="flex flex-wrap justify-center gap-1.5 w-24">
-                    <button className="bg-[#17A2B8] text-white p-1.5 rounded hover:bg-[#138496]"><ListTree className="w-3.5 h-3.5" /></button>
-                    <button className="bg-[#FFC107] text-white p-1.5 rounded hover:bg-[#E0A800]"><Edit className="w-3.5 h-3.5" /></button>
-                    <button className="bg-[#DC3545] text-white p-1.5 rounded hover:bg-[#C82333]"><X className="w-3.5 h-3.5" /></button>
-                    <button className="bg-[#28A745] text-white p-1.5 rounded hover:bg-[#218838]"><Check className="w-3.5 h-3.5" /></button>
-                    <button className="bg-[#DC3545] text-white p-1.5 rounded hover:bg-[#C82333]"><Trash2 className="w-3.5 h-3.5" /></button>
-                    <button className="bg-[#007BFF] text-white p-1.5 rounded hover:bg-[#0056B3]"><Copy className="w-3.5 h-3.5" /></button>
-                  </div>
-                </td>
-              </tr>
+              
+              {isLoading ? (
+                <tr><td colSpan={7} className="p-10 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-[#0B1B42]" /></td></tr>
+              ) : orders.length === 0 ? (
+                <tr><td colSpan={7} className="p-10 text-center text-gray-500">No orders found.</td></tr>
+              ) : (
+                orders.map((order) => (
+                  <tr key={order._id} className="hover:bg-gray-50">
+                    <td className="p-4"><input type="checkbox" className="rounded" /></td>
+                    
+                    <td className="p-4">
+                      <span className="text-[#007BFF] font-bold block text-[15px]">{order.orderNo}</span>
+                      <div className="flex gap-2 mt-2 text-gray-500">
+                        {/* 📌 FIXED: Removed title from Icon, added to button */}
+                        <button title="Copy Order ID" className="hover:text-gray-800 transition-colors">
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <button title="Print Invoice" className="hover:text-gray-800 transition-colors">
+                          <Printer className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+
+                    <td className="p-4 text-xs text-gray-600 space-y-1">
+                      <p><span className="font-medium text-gray-800">Date:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
+                      <p><span className="font-medium text-gray-800">Time:</span> {new Date(order.createdAt).toLocaleTimeString()}</p>
+                    </td>
+
+                    <td className="p-4 text-xs">
+                      <p className="font-bold text-gray-800 text-sm mb-1">{order.customerName}</p>
+                      <p className="text-gray-600 flex items-center gap-1">{order.phone}</p>
+                      <p className="text-gray-500 mt-1 max-w-xs whitespace-normal line-clamp-2" title={order.shippingAddress}>{order.shippingAddress}</p>
+                    </td>
+
+                    <td className="p-4 text-xs space-y-1 text-center border-l border-gray-100">
+                      <p className="font-bold text-gray-800 text-sm">৳{order.totalAmount}</p>
+                      
+                      {/* Payment Status Dropdown */}
+                      <select 
+                        value={order.paymentStatus}
+                        disabled={updatingId === order._id}
+                        onChange={(e) => updateStatus(order._id, "payment", e.target.value)}
+                        className={`text-[11px] font-bold px-2 py-1 rounded cursor-pointer border mt-1 focus:outline-none ${order.paymentStatus === 'Paid' ? 'bg-green-50 text-green-600 border-green-200' : order.paymentStatus === 'Failed' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-yellow-50 text-yellow-600 border-yellow-200'}`}
+                      >
+                        <option value="Pending">Payment Pending</option>
+                        <option value="Paid">Payment Paid</option>
+                        <option value="Failed">Payment Failed</option>
+                      </select>
+                    </td>
+
+                    <td className="p-4 text-center border-l border-gray-100">
+                      {/* Delivery Status Dropdown */}
+                      <select 
+                        value={order.deliveryStatus}
+                        disabled={updatingId === order._id}
+                        onChange={(e) => updateStatus(order._id, "delivery", e.target.value)}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B1B42]/20 transition-all ${
+                          order.deliveryStatus === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : 
+                          order.deliveryStatus === 'Cancelled' ? 'bg-red-100 text-red-700' : 
+                          order.deliveryStatus === 'Shipped' ? 'bg-blue-100 text-blue-700' : 
+                          'bg-orange-100 text-orange-700'
+                        }`}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </td>
+
+                    <td className="p-4">
+                      <div className="flex justify-center gap-1.5">
+                        <button className="bg-gray-100 text-gray-600 p-1.5 rounded hover:bg-[#007BFF] hover:text-white transition-colors" title="View Details"><Eye className="w-4 h-4" /></button>
+                        <button className="bg-gray-100 text-gray-600 p-1.5 rounded hover:bg-[#FFC107] hover:text-white transition-colors" title="Edit"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(order._id)} className="bg-gray-100 text-gray-600 p-1.5 rounded hover:bg-[#DC3545] hover:text-white transition-colors" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
     </div>
   );
 }
