@@ -9,7 +9,8 @@ import {
   Smartphone, 
   Lock, 
   Eye, 
-  EyeOff 
+  EyeOff,
+  Loader2
 } from "lucide-react";
 
 export default function LoginPage() {
@@ -57,10 +58,10 @@ export default function LoginPage() {
 
       setSuccess("Login successful! Redirecting...");
       
-      // ✅ Local Storage এ ইউজারের ডাটা সেভ করা হচ্ছে (এটি মিসিং ছিল)
+      // Local Storage এ ইউজারের ডাটা সেভ করা
       localStorage.setItem("manual_user", JSON.stringify(responseData.data));
       
-      // ✅ লগইন সফল হলে পেজটিকে হার্ড-রিলোড দিয়ে হোমে পাঠানো হচ্ছে
+      // লগইন সফল হলে হোমপেজে পাঠানো হচ্ছে
       setTimeout(() => {
         window.location.href = "/";
       }, 1000);
@@ -78,7 +79,7 @@ export default function LoginPage() {
       {/* Main Card */}
       <div className="max-w-[900px] w-full bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 sm:p-10 lg:p-12">
         
-        {/* === Header Section === */}
+        {/* Header Section */}
         <div className="flex flex-col items-center justify-center text-center mb-10">
           <div className="w-16 h-16 bg-[#F58634] rounded-2xl flex items-center justify-center mb-4 shadow-sm relative">
             <UserRound className="w-8 h-8 text-white absolute -ml-2 -mt-2" strokeWidth={1.5} />
@@ -88,7 +89,7 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm">Access your account securely</p>
         </div>
 
-        {/* === Form Container === */}
+        {/* Form Container */}
         <div className="flex flex-col md:flex-row relative gap-y-8 md:gap-y-0">
           
           {/* 1. Left Column: OTP Login */}
@@ -118,7 +119,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* === OR Divider === */}
+          {/* OR Divider */}
           <div className="flex items-center justify-center relative py-8 md:py-0 md:px-8">
             <div className="absolute w-full h-px md:w-px md:h-[90%] bg-gray-200"></div>
             <div className="relative z-10 w-11 h-11 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm">
@@ -179,8 +180,11 @@ export default function LoginPage() {
                   <input id="remember-me" type="checkbox" className="h-4 w-4 text-[#F58634] focus:ring-[#F58634] border-gray-300 rounded cursor-pointer" />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600 cursor-pointer">Remember me</label>
                 </div>
+                {/* 📌 FIXED: Forgotten Password Route Connected */}
                 <div className="text-sm">
-                  <Link href="#forgot" className="font-medium text-[#F58634] hover:underline">Forgotten password?</Link>
+                  <Link href="/forgot-password" className="font-medium text-[#F58634] hover:underline">
+                    Forgotten password?
+                  </Link>
                 </div>
               </div>
 
@@ -189,14 +193,20 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full flex justify-center items-center py-3 px-4 mt-2 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-[#F58634] hover:bg-[#e0762a] transition-colors focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {loading ? "Signing in..." : "Login"}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Signing in...
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </button>
             </form>
           </div>
           
         </div>
 
-        {/* === Social Login Section === */}
+        {/* === Social Login Section (Google NextAuth) === */}
         <div className="mt-10">
           <div className="relative flex justify-center text-sm">
             <span className="px-4 bg-white text-gray-500 absolute -top-2.5">or signin with</span>
@@ -207,6 +217,7 @@ export default function LoginPage() {
             <button
               onClick={() => signIn("google", { callbackUrl: "/" })}
               className="w-12 h-12 bg-white rounded-full border border-gray-200 shadow-sm flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all focus:outline-none"
+              aria-label="Sign in with Google"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
