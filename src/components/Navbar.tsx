@@ -35,7 +35,6 @@ export default function Navbar() {
         const res = await fetch("/v1/category");
         const data = await res.json();
         if (data.success) {
-          // শুধু Active ক্যাটাগরিগুলো মেনুতে দেখাবে
           setCategories(data.data.filter((cat: ICategory) => cat.status === "Active"));
         }
       } catch (error) {
@@ -49,13 +48,10 @@ export default function Navbar() {
   useEffect(() => {
     const updateCartCount = () => {
       const cart = JSON.parse(localStorage.getItem("pilot_cart") || "[]");
-      setCartCount(cart.length); // কার্টে কতগুলো আইটেম আছে তা সেট করা
+      setCartCount(cart.length);
     };
 
-    // Initial Load
     updateCartCount();
-
-    // Listen to custom event fired from Add to Cart buttons
     window.addEventListener("cartUpdated", updateCartCount);
 
     return () => {
@@ -81,14 +77,14 @@ export default function Navbar() {
     } else {
       localStorage.removeItem("manual_user"); // Manual Logout
       await fetch("/v1/auth/logout", { method: "POST" }).catch(() => {});
-      window.location.href = "/login"; // রিডাইরেক্ট করে পেজ রিলোড করবে
+      window.location.href = "/login";
     }
   };
 
   // ✅ অ্যাডমিন প্যানেলে গেলে Navbar হাইড করার লজিক
   if (pathname.startsWith("/admin")) return null;
 
-  // 📌 Category Split Logic (First 5 vs Rest)
+  // 📌 Category Split Logic
   const visibleCategories = categories.slice(0, 5);
   const moreCategories = categories.slice(5);
 
@@ -98,27 +94,31 @@ export default function Navbar() {
       <div className="w-full px-4 sm:px-8 lg:px-[50px] xl:px-[150px]">
         <div className="flex items-center justify-between h-20 gap-4">
           
-          {/* 1. Left Section: Logo */}
+          {/* 1. Left Section: Logo & Branding */}
           <div className="flex items-center shrink-0">
             <Link href="/" className="flex items-center gap-2.5 group">
               <div className="relative transition-transform duration-300 group-hover:scale-105">
+                {/* 📌 FIXED: Updated Logo Path */}
                 <Image
-                  src="/logo2.png"
+                  src="/favicons/android-chrome-512x512.png"
                   alt="Pilot Natural Logo"
-                  width={140}
-                  height={50} 
-                  className="object-contain h-10 md:h-12 w-auto"
+                  width={45}
+                  height={45} 
+                  className="object-contain h-10 w-10 md:h-[45px] md:w-[45px] drop-shadow-sm rounded-full"
                   priority
                 />
               </div>
+              {/* Brand Name for Navbar */}
+              <span className="font-sans text-xl md:text-[22px] font-bold tracking-tight text-[#1A2B3C]">
+                Pilot <span className="font-light text-[#F58634]">Natural</span>
+              </span>
             </Link>
           </div>
 
-          {/* 2. Center Navigation Links (5 Categories + More Dropdown) */}
+          {/* 2. Center Navigation Links */}
           <div className="hidden lg:flex flex-1 justify-center px-4 h-full">
             <nav className="flex items-center gap-5 xl:gap-7 text-[#2C3E50] text-[14px] xl:text-[15px] font-medium h-full">
               
-              {/* Show First 5 Categories */}
               {visibleCategories.length > 0 ? (
                 visibleCategories.map((cat) => (
                   <Link 
@@ -133,7 +133,6 @@ export default function Navbar() {
                 <span className="text-sm text-gray-400">Loading...</span>
               )}
 
-              {/* Show "More" Dropdown if there are more than 5 categories */}
               {moreCategories.length > 0 && (
                 <div className="relative group h-full flex items-center">
                   <div className="flex items-center gap-1 hover:text-[#F58634] transition-colors cursor-pointer py-8">
@@ -141,7 +140,6 @@ export default function Navbar() {
                     <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-[#F58634] transition-colors" />
                   </div>
                   
-                  {/* Dropdown Menu (Hover) */}
                   <div className="absolute top-[80px] left-1/2 -translate-x-1/2 w-56 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-gray-100 py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                     {moreCategories.map((cat) => (
                       <Link 
@@ -162,7 +160,6 @@ export default function Navbar() {
           {/* 3. Right Section: Search + Cart + User */}
           <div className="hidden sm:flex items-center space-x-3 lg:space-x-4 shrink-0">
             
-            {/* Search Box */}
             <div className="hidden xl:flex relative items-center">
               <input
                 type="text"
@@ -174,7 +171,6 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* 📌 Real Dynamic Cart Icon (Desktop) */}
             <Link
               href="/cart"
               className="relative w-10 h-10 rounded-xl bg-[#F4F5F7] hover:bg-[#EAECEF] text-gray-700 hover:text-[#F58634] flex items-center justify-center transition-colors"
@@ -187,7 +183,6 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* User Profile / Auth Logic */}
             {user ? (
               <div className="relative">
                 <button
@@ -195,21 +190,12 @@ export default function Navbar() {
                   className="w-10 h-10 rounded-xl bg-[#F4F5F7] hover:bg-[#EAECEF] border border-transparent hover:border-gray-200 flex items-center justify-center transition-colors overflow-hidden focus:outline-none"
                 >
                   {user.image || user.avatar ? (
-                    <Image
-                      src={user.image || user.avatar}
-                      alt="User"
-                      width={40}
-                      height={40}
-                      className="object-cover w-full h-full"
-                    />
+                    <Image src={user.image || user.avatar} alt="User" width={40} height={40} className="object-cover w-full h-full" />
                   ) : (
-                    <span className="font-bold text-[#F58634] text-[15px]">
-                      {user.name?.charAt(0).toUpperCase() || "U"}
-                    </span>
+                    <span className="font-bold text-[#F58634] text-[15px]">{user.name?.charAt(0).toUpperCase() || "U"}</span>
                   )}
                 </button>
 
-                {/* Profile Dropdown (Logout) */}
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 flex flex-col animate-in fade-in zoom-in-95 duration-200">
                     <div className="px-4 py-2 border-b border-gray-50 mb-1">
@@ -225,8 +211,7 @@ export default function Navbar() {
                       onClick={handleLogout}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      <LogOut className="w-4 h-4" />
-                      Logout
+                      <LogOut className="w-4 h-4" /> Logout
                     </button>
                   </div>
                 )}
@@ -241,10 +226,8 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* 4. Mobile Menu Toggle & Cart */}
+          {/* 4. Mobile Menu Toggle */}
           <div className="lg:hidden flex items-center gap-3">
-            
-            {/* 📌 Real Dynamic Cart Icon (Mobile) */}
             <Link
               href="/cart"
               className="relative w-9 h-9 rounded-xl bg-[#F4F5F7] text-gray-700 flex items-center justify-center hover:bg-[#EAECEF]"
@@ -273,17 +256,10 @@ export default function Navbar() {
         <div className="lg:hidden bg-white border-t border-gray-100 px-4 pt-4 pb-6 shadow-xl h-[calc(100vh-80px)] overflow-y-auto">
           
           <div className="relative mb-6 sm:hidden flex items-center">
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="w-full bg-[#F4F5F7] text-gray-800 text-sm pl-4 pr-10 py-3 rounded-xl focus:outline-none"
-            />
-            <button className="absolute right-3 text-gray-600">
-              <Search className="w-5 h-5" />
-            </button>
+            <input type="text" placeholder="Search products..." className="w-full bg-[#F4F5F7] text-gray-800 text-sm pl-4 pr-10 py-3 rounded-xl focus:outline-none" />
+            <button className="absolute right-3 text-gray-600"><Search className="w-5 h-5" /></button>
           </div>
 
-          {/* 📌 Mobile Category List (Shows all categories on mobile vertically) */}
           <div className="py-2">
             <div className="flex items-center gap-2 mb-3 text-[#F58634]">
               <ListTree className="w-4 h-4" />
@@ -308,7 +284,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Mobile Auth Logic */}
+          {/* Mobile Auth */}
           {user ? (
             <div className="mt-6 border-t border-gray-100 pt-6">
               <div className="flex items-center gap-3 py-2 px-3 mb-4">
