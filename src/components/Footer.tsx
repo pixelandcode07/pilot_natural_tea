@@ -13,24 +13,22 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#0A1E11] text-[#E8DFC8] pt-16 pb-6 border-t-[4px] border-[#1E5E3A]">
-      {/* 1920x1080 ডিসপ্লের জন্য ন্যাভবার ও অন্যান্য সেকশনের সাথে হুবহু অ্যালাইমেন্ট (lg:px-[150px]) */}
       <div className="w-full px-4 sm:px-8 lg:px-[150px] mx-auto">
         
-        {/* ========================================= */}
-        {/* Top 4 Columns: Info, Links, Contact */}
-        {/* ========================================= */}
+        {/* Top 4 Columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 mb-10">
           
           {/* ১. Brand Info Section */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2.5 group inline-flex">
-              <div className="relative w-10 h-10 flex items-center justify-center p-1 rounded-full">
+              <div className="relative transition-transform duration-300 group-hover:scale-105 bg-white p-1 rounded-full overflow-hidden">
+                {/* 📌 FIXED: Updated Logo Path */}
                 <Image
                   src="/favicons/android-chrome-512x512.png" 
                   alt="Pilot Natural Logo"
                   width={40}
                   height={40}
-                  className="object-contain"
+                  className="object-contain rounded-full"
                 />
               </div>
               <span className="font-sans text-2xl font-bold tracking-tight text-white">
@@ -99,12 +97,9 @@ export default function Footer() {
 
         </div>
 
-        {/* ========================================= */}
         {/* Bottom Bar: Copyright & Payment Methods */}
-        {/* ========================================= */}
         <div className="border-t border-[#133821] pt-8 mt-4 flex flex-col xl:flex-row items-center justify-between gap-6">
           
-          {/* Left: Copyright & Developer Info */}
           <div className="flex flex-col gap-1.5 text-gray-400 text-xs sm:text-sm text-center xl:text-left">
             <p>Copyright &copy; {new Date().getFullYear()} Pilot Natural. All Rights Reserved.</p>
             <p>
@@ -120,7 +115,6 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Right: Payment Methods Image */}
           <div className="w-full xl:w-auto max-w-3xl flex items-center justify-center xl:justify-end bg-white/95 rounded-xl p-2 sm:p-3 shadow-md">
              <Image
               src="/paymentMethod.png" 
